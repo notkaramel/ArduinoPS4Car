@@ -36,6 +36,27 @@ void setup()
     Serial.println("\r\nPS4 Bluetooth Library Started");
 }
 
+void logHatCoordinate()
+{
+    // Left Hat (Left Joystick)
+    Serial.println("Left Hat (Left Joystick):");
+    Serial.print("X: ");
+    Serial.print(PS4.getAnalogHat(LeftHatX));
+    Serial.print("\t");
+    Serial.print("Y: ");
+    Serial.print(PS4.getAnalogHat(LeftHatY));
+    Serial.print("\r\n");
+
+    // Right Hat (Right Joystick)
+    Serial.println("Right Hat (Right Joystick):");
+    Serial.print("X: ");
+    Serial.print(PS4.getAnalogHat(RightHatX));
+    Serial.print("\t");
+    Serial.print("Y: ");
+    Serial.print(PS4.getAnalogHat(RightHatY));
+    Serial.print("\r\n");
+}
+
 void loop()
 {
     Usb.Task(); // Check current state of the connection
@@ -43,7 +64,7 @@ void loop()
     if (PS4.connected())
     {
         // do stuffs
-        // PS4.getAnalogHat()
+        logHatCoordinate();
     }
 }
 
