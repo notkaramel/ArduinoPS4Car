@@ -2,6 +2,7 @@
 
 ## Setup
 > Here I use Arch Linux, other linux distros may have different package manager. For Windows, idk :)
+
 - Install Arduino IDE, Arduino CLI
 ```sh
 sudo pacman -S arduino arduino-cli
