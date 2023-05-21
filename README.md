@@ -49,3 +49,6 @@ sudo usermod -aG uucp $USER
 - [USB Host Shield 2.0 - PS4 Library](https://github.com/felis/USB_Host_Shield_2.0#ps4-library)
 - [Arduino CLI](https://arduino.github.io/arduino-cli/latest/)
 - [Arduino (archwiki)](https://wiki.archlinux.org/title/arduino)
+- [PS4BT Class](https://felis.github.io/USB_Host_Shield_2.0/class_p_s4_b_t.html)
+- [PS4Parser Class](https://felis.github.io/USB_Host_Shield_2.0/class_p_s4_parser.html): Getting data/raw value from the controller
+- [Controller Enumerations](https://felis.github.io/USB_Host_Shield_2.0/controller_enums_8h.html)
