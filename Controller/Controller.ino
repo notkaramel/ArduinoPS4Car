@@ -21,41 +21,74 @@ PS4BT PS4(&BluetoothController, PAIR);
 
 // Defining constants
 #define SERIAL_BAUD 2400
-
+// Motor A
+#define ENA 9;
+#define IN1 8;
+#define IN2 7;
+// MotorB
+#define ENB 3;
+#define IN3 5;
+#define IN4 4;
 
 void setup()
 {
     Serial.begin(SERIAL_BAUD);
-    Serial.println("Starting on" + String(SERIAL_BAUD) + " baud");
+    Serial.println("Starting on " + String(SERIAL_BAUD) + " baud");
 
-    while (Usb.Init() != -1) // ??
+    // Init(): "Returns 0 if success, -1 if not"
+    while (Usb.Init() == -1) // while not sucsessful
     {
-        Serial.println("OSC did not start"); 
+        Serial.println("OSC did not start. Retrying in 1 second...");
+        delay(1000);
     }
 
-    Serial.println("\r\nPS4 Bluetooth Library Started");
+    Serial.println("Setup complete");
+    
+    // USB init() until established a connection
+    
+    Usb.Task();
 }
 
-void logHatCoordinate()
+void getHatsCoordinates()
 {
-    // Left Hat (Left Joystick)
-    Serial.println("-- Joystick --");
-    Serial.print("| Left Joystick:");
-    Serial.print("X: ");
-    Serial.print(PS4.getAnalogHat(LeftHatX));
-    Serial.print(" -- ");
-    Serial.print("Y: ");
-    Serial.print(PS4.getAnalogHat(LeftHatY));
-    Serial.print("\r"); // ?
+    /**
+     * @brief Log the hats' coordinates
+     */
+    uint8_t LeftX = PS4.getAnalogHat(LeftHatX);
+    uint8_t LeftY = PS4.getAnalogHat(LeftHatY);
 
-    // Right Hat (Right Joystick)
-    Serial.print("\t| Right Joystick:");
-    Serial.print("X: ");
-    Serial.print(PS4.getAnalogHat(RightHatX));
-    Serial.print("\t");
-    Serial.print("Y: ");
-    Serial.print(PS4.getAnalogHat(RightHatY));
-    Serial.print("|\r");
+    uint8_t RightX = PS4.getAnalogHat(RightHatX);
+    uint8_t RightY = PS4.getAnalogHat(RightHatY);
+
+    boolean hasMovement = (LeftX > 137 || LeftX < 117 || LeftY > 137 || LeftY < 117 || RightX > 137 || RightX < 117 || RightY > 137 || RightY < 117);
+    // Left Hat (Left Joystick)
+    if (hasMovement)
+    {
+        Serial.print("LeftJoy: ");
+        Serial.print("X: ");
+        Serial.print(LeftX);
+        Serial.print("| Y: ");
+        Serial.print(LeftY);
+        Serial.print("\t");
+
+        // Right Hat (Right Joystick)
+        Serial.print("RightJoy: ");
+        Serial.print("X: ");
+        Serial.print(RightX);
+        Serial.print("| Y: ");
+        Serial.print(RightY);
+        Serial.println();
+    }
+}
+
+void getHatsCoordinates(uint16_t delayTime)
+{
+    /**
+     * @brief Log the hats' coordinates with a delay in between
+     * @param delayTime: delay in milliseconds
+     */
+    getHatsCoordinates();
+    delay(delayTime);
 }
 
 void disconnectController()
@@ -106,7 +139,6 @@ void setLED_Color(ColorsEnum color)
     PS4.setLed(color);
 }
 
-
 void setLED_RGB(uint8_t r, uint8_t g, uint8_t b)
 {
     /**
@@ -133,12 +165,9 @@ void setLED_Flashing(uint16_t period, unsigned int duration)
 
 void loop()
 {
-    Usb.Task(); // Check current state of the connection
 
     if (PS4.connected())
     {
-        // do stuffs
-        logHatCoordinate();
+        setRumble(1, 1000);
     }
 }
-
