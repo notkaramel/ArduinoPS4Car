@@ -5,7 +5,7 @@
 
  Authors:
   - Antoine Phan (@notkaramel)
-  - Cyril El Feghali (@?)
+  - Cyril El Feghali (@CyrilMyril)
 */
 
 // importing the libraries
@@ -22,13 +22,16 @@ PS4BT PS4(&BluetoothController, PAIR);
 // Defining constants
 #define SERIAL_BAUD 2400
 // Motor A
-#define ENA 9;
-#define IN1 8;
-#define IN2 7;
+uint8_t ENA = 9;
+uint8_t IN1 = 8;
+uint8_t IN2 = 7;
 // MotorB
-#define ENB 3;
-#define IN3 5;
-#define IN4 4;
+uint8_t ENB = 3;
+uint8_t IN3 = 5;
+uint8_t IN4 = 4;
+
+int *LeftHatCoordinates = new int[2];
+int *RightHatCoordinates = new int[2];
 
 void setup()
 {
@@ -43,52 +46,15 @@ void setup()
     }
 
     Serial.println("Setup complete");
-    
-    // USB init() until established a connection
-    
-    Usb.Task();
-}
 
-void getHatsCoordinates()
-{
-    /**
-     * @brief Log the hats' coordinates
-     */
-    uint8_t LeftX = PS4.getAnalogHat(LeftHatX);
-    uint8_t LeftY = PS4.getAnalogHat(LeftHatY);
+    // Setting up the motors
+    pinMode(ENA, OUTPUT);
+    pinMode(IN1, OUTPUT);
+    pinMode(IN2, OUTPUT);
 
-    uint8_t RightX = PS4.getAnalogHat(RightHatX);
-    uint8_t RightY = PS4.getAnalogHat(RightHatY);
-
-    boolean hasMovement = (LeftX > 137 || LeftX < 117 || LeftY > 137 || LeftY < 117 || RightX > 137 || RightX < 117 || RightY > 137 || RightY < 117);
-    // Left Hat (Left Joystick)
-    if (hasMovement)
-    {
-        Serial.print("LeftJoy: ");
-        Serial.print("X: ");
-        Serial.print(LeftX);
-        Serial.print("| Y: ");
-        Serial.print(LeftY);
-        Serial.print("\t");
-
-        // Right Hat (Right Joystick)
-        Serial.print("RightJoy: ");
-        Serial.print("X: ");
-        Serial.print(RightX);
-        Serial.print("| Y: ");
-        Serial.print(RightY);
-        Serial.println();
-    }
-}
-
-void getHatsCoordinates(uint16_t delayTime)
-{
-    /**
-     * @brief Log the hats' coordinates with a delay in between
-     * @param delayTime: delay in milliseconds
-     */
-    getHatsCoordinates();
-    delay(delayTime);
+    pinMode(ENB, OUTPUT);
+    pinMode(IN3, OUTPUT);
+    pinMode(IN4, OUTPUT);    
 }
 
 void disconnectController()
@@ -163,11 +129,122 @@ void setLED_Flashing(uint16_t period, unsigned int duration)
     delay(duration);
 }
 
+int getBatteryLevel()
+{
+    /**
+     * @brief Get the battery level of the controller
+     * @return battery level in percent
+     */
+    return PS4.getBatteryLevel();
+}
+
+void pressBreak()
+{
+    /**
+     * @brief Press the break
+     */
+    analogWrite(ENA, 0);
+    analogWrite(ENB, 0);
+}
+
+int getAcceleration()
+{
+    /**
+     * @brief Accelerate the car via right analog trigger
+     * @return acceleration as int
+     */
+    return PS4.getAnalogButton(R2);
+}
+
+int getDeceleration()
+{
+    /**
+     * @brief Decelerate the car via left analog trigger
+     * @return deceleration as int
+     */
+    return PS4.getAnalogButton(L2);
+}
+
+int getDirection()
+{
+    /**
+     * @brief Get the direction of the car via left analog stick
+     * @return direction as int.
+     * The magnitude of the value is the strength of the turn.
+     */
+    return PS4.getAnalogHat(LeftHatX);
+}
+
+void go(int speed, int direction)
+{
+    /**
+     * @brief Go straight
+     * @param speed: speed of the motors (0-255)
+     * @param direction: direction of the car (0-255 | left-right)
+     * 0    -   120: left
+     * 121  -   132: straight
+     * 133  -   255: right
+     */
+
+    int leftSpeed, rightSpeed;
+    if (direction < 120)
+    {
+        leftSpeed = speed;
+        rightSpeed = speed * (direction / 120);
+    }
+    else if (direction > 133)
+    {
+        leftSpeed = speed * ((255 - direction) / 133);
+        rightSpeed = speed;
+    }
+    else
+    {
+        leftSpeed = speed;
+        rightSpeed = speed;
+    }
+
+    // Assuming A is left and B is right
+    // Set analog speed
+    analogWrite(ENA, leftSpeed);
+    analogWrite(ENB, rightSpeed);
+    
+    // digitalWrite(IN1, HIGH);
+    // digitalWrite(IN2, LOW);
+
+    // digitalWrite(IN3, HIGH);
+    // digitalWrite(IN4, LOW);
+}
+
 void loop()
 {
+    Usb.Task();
 
     if (PS4.connected())
     {
-        setRumble(1, 1000);
+        go(getAcceleration(), getDirection());
+
+        if(PS4.getButtonPress(PS))
+        {
+            if(PS4.getButtonPress(SELECT))
+            {
+                disconnectController();
+            }
+            if(PS4.getButtonPress(UP))
+            {
+                setLED_Color(White);
+            }
+            else if(PS4.getButtonPress(RIGHT))
+            {
+                setLED_Color(Red);
+            }
+            else if(PS4.getButtonPress(DOWN))
+            {
+                setLED_Color(Blue);
+            }
+            else if(PS4.getButtonPress(LEFT))
+            {
+                setLED_Color(Green);
+            }
+        }
     }
 }
