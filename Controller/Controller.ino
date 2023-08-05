@@ -20,7 +20,7 @@ BTD BluetoothController(&Usb);
 PS4BT PS4(&BluetoothController, PAIR);
 
 // Defining constants
-#define SERIAL_BAUD 2400
+#define SERIAL_BAUD 115200
 // Motor A
 uint8_t ENA = 9;
 uint8_t IN1 = 8;
@@ -172,10 +172,23 @@ int getDirection()
      * @return direction as int.
      * The magnitude of the value is the strength of the turn.
      */
-    return PS4.getAnalogHat(LeftHatX);
+    return PS4.getAnalogHat(RightHatX);
 }
 
-void go(int speed, int direction)
+bool isReverse()
+{
+    /**
+     * @brief Check if the car is in reverse
+     * @return true if the car is in reverse
+     */
+    if (PS4.getButtonPress(R1))
+    {
+        return true;
+    }
+    return false;
+}
+
+void go(int speed, int direction, bool reverse = false)
 {
     /**
      * @brief Go straight
@@ -186,15 +199,16 @@ void go(int speed, int direction)
      * 133  -   255: right
      */
 
+    // Can also use Arduino map() function
     int leftSpeed, rightSpeed;
     if (direction < 120)
     {
         leftSpeed = speed;
-        rightSpeed = speed * (direction / 120);
+        rightSpeed = map(speed, 0, 255, 0, direction);
     }
     else if (direction > 133)
     {
-        leftSpeed = speed * ((255 - direction) / 133);
+        leftSpeed = map(speed, 0, 255, 0, 255 - direction);
         rightSpeed = speed;
     }
     else
@@ -208,11 +222,22 @@ void go(int speed, int direction)
     analogWrite(ENA, leftSpeed);
     analogWrite(ENB, rightSpeed);
     
-    // digitalWrite(IN1, HIGH);
-    // digitalWrite(IN2, LOW);
+    if (reverse)
+    {
+        digitalWrite(IN1, LOW);
+        digitalWrite(IN2, HIGH);
 
-    // digitalWrite(IN3, HIGH);
-    // digitalWrite(IN4, LOW);
+        digitalWrite(IN3, LOW);
+        digitalWrite(IN4, HIGH);
+    }
+    else
+    {
+        digitalWrite(IN1, HIGH);
+        digitalWrite(IN2, LOW);
+
+        digitalWrite(IN3, HIGH);
+        digitalWrite(IN4, LOW);
+    }
 }
 
 void loop()
@@ -221,7 +246,7 @@ void loop()
 
     if (PS4.connected())
     {
-        go(getAcceleration(), getDirection());
+        go(getAcceleration(), getDirection(), isReverse());
 
         if(PS4.getButtonPress(PS))
         {
